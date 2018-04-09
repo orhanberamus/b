@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "829281769500",
+    "firebase_url": "https://fcmdeneme-db320.firebaseio.com",
+    "project_id": "fcmdeneme-db320",
+    "storage_bucket": "fcmdeneme-db320.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829281769500:android:f5a1dfb7dd511c2c",
+        "android_client_info": {
+          "package_name": "com.fcmdeneme"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "829281769500-skekc0igd6oquabp03rn8ii2p7koj9uk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHkfXyRGdKhxSqHjM7mJjcSQIeWNlFRPM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
