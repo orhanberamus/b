@@ -19,6 +19,7 @@ export default class AnimatedBar extends Component {
       Animated.delay(delay),
       Animated.timing(this._width, {
         toValue: value,
+        duration: 2000,
       }),
     ]).start();
   }

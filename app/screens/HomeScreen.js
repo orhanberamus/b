@@ -3,7 +3,7 @@ import {
   Platform,
   StyleSheet,
   Text,
-  View, AppState, Dimensions, ActivityIndicator, FlatList, ScrollView
+  View, AppState, Dimensions, ActivityIndicator, FlatList, ScrollView, Image, ImageBackground
 } from 'react-native';
 import QuestionScreen from '../screens/QuestionScreen';
 import PopupDialog, { SlideAnimation } from 'react-native-popup-dialog';
@@ -14,8 +14,8 @@ const slideAnimation = new SlideAnimation({
 	slideFrom: 'bottom',
 });
 const window = Dimensions.get('window');
-const DELAY = 100;
-export default class App extends Component<Props> {
+const DELAY = 1000;
+export default class HomeScreen extends Component<Props> {
   constructor(props){
     super(props);
     this.state = {
@@ -30,11 +30,12 @@ export default class App extends Component<Props> {
       getQuestion: true
 
     }
-    this.props.socket.on('answerStatisticsMsg', this.answerStatisticsMsgHandler);
-    this.props.socket.on('requestQuestionMsg', this.requestQuestionMsgHandler);
+    this.props.screenProps.on('answerStatisticsMsg', this.answerStatisticsMsgHandler);
+    this.props.screenProps.on('requestQuestionMsg', this.requestQuestionMsgHandler);
 
   }
   componentDidMount(){
+    console.log(this.props);
   }
   answerStatisticsMsgHandler = (data) => {
     console.log("answerstatistics geldi");
@@ -60,6 +61,7 @@ export default class App extends Component<Props> {
       data: data1,
       answerMessage: data.message
     });
+    this.closeQuestion();
   }
   showQuestion = () => {
     if(!this.state.timeout){
@@ -79,80 +81,117 @@ export default class App extends Component<Props> {
   }
   requestQuestion = () => {
     if(this.state.getQuestion){
-      this.props.socket.emit("requestQuestion", "amyamy")
+      this.props.screenProps.emit("requestQuestion", this.props.navigation.state.params.email)
     }
   }
   closeQuestion = () => {//question text
     this.state.popupQuestion.dismiss();
-    setTimeout(() => {
-      this.state.popupStatistics.show();
-    }, 500);
+    this.setState({
+      timeOut: true
+    })
+    this.state.popupStatistics.show();
     //this.props.socket.emit("getAnswerStatistics", 2);
     //this.props.socket.emit("updateUserAnswer", data)
   }
   renderStatistics = () => {
-    var  content = <PopupDialog
-        ref={((popupDialog)=>this.popupStatistics = popupDialog)}
-        ref={d => !this.state.popupStatistics && this.setState({ popupStatistics: d })}
-        dialogAnimation={slideAnimation}
-        height={0.5}
-        dismissOnTouchOutside={true}
-        dismissOnHardwareBackPress={true}
-      >
-      <ScrollView>
-        <View style={{ flex: 1, backgroundColor: '#F5FCFF', justifyContent: 'center'}}>
-        <Text style={{fontSize: 24, alignSelf: 'center', fontWeight: 'bold'}}>{this.state.answerMessage}</Text>
-        <Text style={{fontSize: 20}}>Diğer kullanıcıların cevapları</Text>
-          <View>
-            {this.state.data.map((index) => <AnimatedBar value={index.width} socket={this.props.socket} email="orhanfidan@hotmail.com" text={index.text} percent={index.percent} color={index.color} delay={DELAY * index} key={index.k} />)}
+    var content;
+    if(this.state.timeOut){
+      content =
+      <PopupDialog
+          ref={((popupDialog)=>this.popupStatistics = popupDialog)}
+          ref={d => !this.state.popupStatistics && this.setState({ popupStatistics: d })}
+          dialogAnimation={slideAnimation}
+          height={0.5}
+          dismissOnTouchOutside={true}
+          dismissOnHardwareBackPress={true}
+        >
+        <ScrollView>
+          <View style={{ flex: 1, backgroundColor: '#F5FCFF', justifyContent: 'center'}}>
+          <Text style={{fontSize: 24, alignSelf: 'center', fontWeight: 'bold'}}>{this.state.answerMessage}</Text>
+          <Text style={{fontSize: 20}}>Diğer kullanıcıların cevapları</Text>
+            <View>
+              {this.state.data.map((index) => <AnimatedBar value={index.width} socket={this.props.screenProps} email="orhanfidan@hotmail.com" text={index.text} percent={index.percent} color={index.color} delay={DELAY * index} key={index.k} />)}
+            </View>
           </View>
-        </View>
-        </ScrollView>
-      </PopupDialog>
+          </ScrollView>
+        </PopupDialog>
+    } else{
+      content = null;
+    }
     return content;
   }
   render() {
     return (
-      <View style={styles.container}>
-      <View style={{flex: 1, backgroundColor:'#EEE', justifyContent: 'center'}}><Text style={{alignSelf: 'center', fontSize: 20}}>REKLAM</Text></View>
-        <View style={{flex: 1.25, justifyContent: 'center'}}>
-          <Text style={{alignSelf: 'center', fontSize: 20}}>{this.state.questionInfo}</Text>
+      <ImageBackground
+        source={require('../imgs/d.png')}
+        resizeMode="cover"
+        style={{
+          flex: 1,
+          alignSelf: 'stretch',
+          width: '100%',
+          height: '100%',
+          borderRadius:35,
+          position:'absolute'
+        }}
+      >
+        <View style={{flex: 2, backgroundColor:'#EEE', justifyContent: 'center', flexDirection: 'row'}}>
+        <Image
+          source={require('../imgs/chanel1.gif')}
+          resizeMode="stretch"
+          style={{
+            flex: 1,
+            alignSelf: 'stretch',
+            width: "100%",
+            height: "100%",
+            borderRadius:35
+          }}
+          />
+          <Image
+            source={require('../imgs/shoes.gif')}
+            resizeMode="stretch"
+            style={{
+              flex: 1,
+              alignSelf: 'stretch',
+              width: "100%",
+              height: "100%",
+              borderRadius:35
+            }}
+            />
         </View>
-        <PopupDialog
-      		ref={((popupDialog)=>this.popupQuestion = popupDialog)}
-      		ref={d => !this.state.popupQuestion && this.setState({ popupQuestion: d })}
-      		dialogAnimation={slideAnimation}
-          height={1}
-    			dismissOnTouchOutside={false}
-    			dismissOnHardwareBackPress={false}
-    		>
-            <QuestionScreen ref={((popupDialog)=>this.ss = popupDialog)}
-              ref={d => !this.state.ss && this.setState({ ss: d })}
-              closeQuestion={this.closeQuestion} socket={this.props.socket}/>
-        </PopupDialog>
-        <Text style={{fontWeight:'bold', fontSize:20, alignSelf: 'center'}}>Anasayfa</Text>
-        <View style={styles.button}>
-    			<Button
-    				raised
-    				title='Sor'
-    				backgroundColor='#545454'
-    				onPress={() => this.requestQuestion()}
-    				fontSize={22}
-    				color="#e7e7d6"
-    				buttonStyle={{borderRadius:12,}}
-    				containerViewStyle={{backgroundColor:'#e7e7d6', borderRadius:12, marginRight:20, marginLeft:20}}
-    			/>
-        </View>
+          <View style={{flex: 1.25, justifyContent: 'center'}}>
+            <Text style={{fontWeight:'bold', fontSize:20, alignSelf: 'center'}}>Anasayfa</Text>
+          </View>
+          <View style={{flex: 1.25, justifyContent: 'center'}}>
+            <Text style={{alignSelf: 'center', fontSize: 20}}>{this.state.questionInfo}</Text>
+          </View>
+          <PopupDialog
+        		ref={((popupDialog)=>this.popupQuestion = popupDialog)}
+        		ref={d => !this.state.popupQuestion && this.setState({ popupQuestion: d })}
+        		dialogAnimation={slideAnimation}
+            height={1}
+      			dismissOnTouchOutside={false}
+      			dismissOnHardwareBackPress={false}
+      		>
+              <QuestionScreen ref={((popupDialog)=>this.ss = popupDialog)}
+                ref={d => !this.state.ss && this.setState({ ss: d })}
+                closeQuestion={this.closeQuestion} socket={this.props.screenProps} email={this.props.navigation.state.params.email}/>
+          </PopupDialog>
 
-        <View style={{flex: 1, paddingTop:20}}>
-        <FlatList
-          data={this.state.dataSource}
-          renderItem={({item}) => <Text>{item.title}, {item.releaseYear}</Text>}
-          keyExtractor={(item, index) => index}
-        />
-      </View>
-      {this.renderStatistics()}
-      </View>
+          <View style={styles.button}>
+      			<Button
+      				raised
+      				title='Sor'
+      				backgroundColor='#54545499'
+      				onPress={() => this.requestQuestion()}
+      				fontSize={18}
+      				color="#e7e7d6"
+      				buttonStyle={{borderRadius:12,}}
+      				containerViewStyle={{backgroundColor:'#e7e7d6', borderRadius:12, marginRight:20, marginLeft:20}}
+      			/>
+          </View>
+
+        {this.renderStatistics()}
+      </ImageBackground>
     );
   }
 }
@@ -163,10 +202,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5FCFF',
     width:  Dimensions.get('window').width
   },button: {
-    flex: 1,
+    flex: 2,
     justifyContent: 'center',
-		marginBottom: 20,
-		marginTop: 20,
+		marginBottom: 100,
 		zIndex: 5,
 		paddingLeft: 20,
 		paddingRight:20,

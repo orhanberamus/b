@@ -11,7 +11,7 @@ import { Icon, Button } from 'react-native-elements'
 const slideAnimation = new SlideAnimation({
 	slideFrom: 'bottom',
 });
-export default class App extends Component<Props> {
+export default class QuestionScreen extends Component<Props> {
   constructor(props){
     super(props);
     this.state = {
@@ -30,7 +30,8 @@ export default class App extends Component<Props> {
     this.setState({
       isLoading: true
     });
-    fetch('http://192.168.1.24/tetris1/question.json')
+    //fetch('http://192.168.1.24/tetris1/question.json')
+    fetch('https://tezorhan.herokuapp.com/j')
       .then((response) => response.json())
       .then((responseJson) => {
         console.log(responseJson.choices);
@@ -58,7 +59,7 @@ export default class App extends Component<Props> {
     var data = {
       id: this.state.id,
       choice: this.state.choice,
-      userName: "amyamy"
+      email: this.props.email
     }
     this.props.socket.emit('emitUserAnswer', data);
     this.state.popupConfirm.dismiss();
