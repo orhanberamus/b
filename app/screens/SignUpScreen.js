@@ -88,7 +88,6 @@ export default class SignUpScreen extends Component<Props> {
         isEmailValid: false
       });
     }
-    this.checkEntryValidity();
   }
   renderButton = () => {
     var content;
@@ -98,12 +97,12 @@ export default class SignUpScreen extends Component<Props> {
         <Button
           raised
           title="Kayıt ol"
-          backgroundColor='#4080FF'
+          backgroundColor='#F2E8EB'
           onPress={this.checkEntryValidity}
           fontSize={15}
           color= {this.state.fontColor}
           buttonStyle={{borderRadius:12, backgroundColor:'rgba(255, 255, 255, 0)'}}
-          containerViewStyle={{backgroundColor:'rgba(255, 255, 255, 0)', borderRadius:18, borderWidth: 1, marginRight:20, marginLeft:20, borderColor:this.state.fontColor}}
+          containerViewStyle={styles.buttonContainer}
         />
         <View style={{flex: 1, paddingRight: 20, paddingLeft: 20,}}>
 
@@ -134,32 +133,24 @@ export default class SignUpScreen extends Component<Props> {
     var passwordEmpty = this.checkEmpty(this.state.password, "password");
     var rePasswordEmpty = this.checkEmpty(this.state.rePassword, "rePassword");
     this.checkPassword();
-    if(!firstNameEmpty && !lastNameEmpty && !phoneEmpty && !emailEmpty && !passwordEmpty && !rePasswordEmpty && this.checkPassword()){
-      if(!this.state.isEmailValid){
-        this.props.screenProps.emit('checkEmail', this.state.email);
-      }
-      if(this.state.isEmailValid){
-        console.log("true") // activition key gonder //database e kaydet
-        var number = Math.random(1);
-        var s = number.toString();
-        var activationKey = s.slice(2, s.length);
+    if(!firstNameEmpty && !lastNameEmpty && !phoneEmpty && !emailEmpty && !passwordEmpty && !rePasswordEmpty && this.checkPassword() && this.state.isEmailValid){
 
-        var data = {
-          firstName: this.state.firstName,
-          lastName: this.state.lastName,
-          phone: this.state.phone,
-          email: this.state.email,
-          password: this.state.password,
-          activationKey: 2,
-          activated: false,
-          from: 'E'
-        }
-        this.props.screenProps.emit("addNewUser", data)
+      console.log("true") // activition key gonder //database e kaydet
 
-        this.state.realm.write(() => {
-          this.state.realm.create('user3', {email: this.state.email, password: this.state.password, state: 'activation', rememberMe: true, get: 1});
-        });
+      var data = {
+        firstName: this.state.firstName,
+        lastName: this.state.lastName,
+        phone: this.state.phone,
+        email: this.state.email,
+        password: this.state.password,
+        activated: false,
+        from: 'E'
       }
+      this.props.screenProps.emit("addNewUser", data)
+
+      this.state.realm.write(() => {
+        this.state.realm.create('user3', {email: this.state.email, password: this.state.password, state: 'activation', rememberMe: true, get: 1});
+      });
     }else{
       console.log('false');
     }
@@ -228,6 +219,12 @@ export default class SignUpScreen extends Component<Props> {
       isVisible: true,
     })
   }
+   onFocus(ref) {
+     ref.setNativeProps({ style:{borderColor: '#3793fc', } })
+   }
+   onBlur(ref){
+     ref.setNativeProps({ style:{borderColor: this.state.fontColor, } })
+   }
   render() {
     return (
       <ImageBackground
@@ -251,6 +248,8 @@ export default class SignUpScreen extends Component<Props> {
               underlineColorAndroid="transparent"
               maxLength={17}
               onChangeText = {(firstName) => this.setState({firstName : firstName})}
+              onFocus={ () => this.onFocus(this.firstNameInput) }
+              onBlur={ () => this.onBlur(this.firstNameInput) }
               ref={component => this.firstNameInput = component}
             />
           </View>
@@ -262,6 +261,8 @@ export default class SignUpScreen extends Component<Props> {
               underlineColorAndroid="transparent"
               maxLength={17}
               onChangeText = {(lastName) => this.setState({lastName : lastName})}
+              onFocus={ () => this.onFocus(this.lastNameInput) }
+              onBlur={ () => this.onBlur(this.lastNameInput) }
               ref={component => this.lastNameInput = component}
             />
           </View>
@@ -274,6 +275,8 @@ export default class SignUpScreen extends Component<Props> {
               maxLength={10}
               keyboardType={'numeric'}
               onChangeText = {(phone) => this.setState({phone : phone})}
+              onFocus={ () => this.onFocus(this.phoneInput) }
+              onBlur={ () => this.onBlur(this.phoneInput) }
               ref={component => this.phoneInput = component}
             />
           </View>
@@ -285,7 +288,9 @@ export default class SignUpScreen extends Component<Props> {
               underlineColorAndroid="transparent"
               maxLength={30}
               keyboardType={'email-address'}
-              onChangeText = {(email) => this.setState({email : email})}
+              onChangeText = {(email) => { this.setState({email : email});  this.props.screenProps.emit('checkEmail', this.state.email);}}
+              onFocus={ () => this.onFocus(this.emailInput) }
+              onBlur={ () => this.onBlur(this.emailInput) }
               ref={component => this.emailInput = component}
             />
           </View>
@@ -298,6 +303,8 @@ export default class SignUpScreen extends Component<Props> {
               secureTextEntry={true}
               maxLength={8}
               onChangeText = {(password) => this.setState({password : password})}
+              onFocus={ () => this.onFocus(this.passwordInput) }
+              onBlur={ () => this.onBlur(this.passwordInput) }
               ref={component => this.passwordInput = component}
             />
           </View>
@@ -310,6 +317,8 @@ export default class SignUpScreen extends Component<Props> {
               secureTextEntry={true}
               maxLength={8}
               onChangeText = {(rePassword) => this.setState({rePassword : rePassword})}
+              onFocus={ () => this.onFocus(this.rePasswordInput) }
+              onBlur={ () => this.onBlur(this.rePasswordInput) }
               ref={component => this.rePasswordInput = component}
             />
           </View>
@@ -367,5 +376,12 @@ const styles = StyleSheet.create({
     color:'#ff4500',
     top: '25%',
     alignSelf: 'flex-end'
+  },
+  buttonContainer: {
+    backgroundColor:'#ECEAF3',
+    borderRadius:18,
+    marginRight:20,
+    marginLeft:20,
+    elevation:10
   }
 });

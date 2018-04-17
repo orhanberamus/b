@@ -1,14 +1,16 @@
 import React, { Component } from 'react';
-import {Text, Button } from 'react-native';
-import {StackNavigator, DrawerNavigator} from 'react-navigation';
+import {Text} from 'react-native';
+import {StackNavigator, DrawerNavigator, TabNavigator} from 'react-navigation';
 import { NavigationActions } from 'react-navigation';
-
+import { Icon, Button } from 'react-native-elements'
 import FCM, { FCMEvent } from "react-native-fcm";
 import DrawerScreen from '../screens/DrawerScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LoginFirebaseScreen from '../screens/LoginFirebaseScreen';
 import SignUpScreen from '../screens/SignUpScreen';
 import ActivationScreen from '../screens/ActivationScreen';
+import LadderBoardScreen from '../screens/LadderBoardScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const NotificationScreen = () => <Text> Notification </Text>
 
@@ -23,13 +25,88 @@ import io from 'socket.io-client/dist/socket.io';
 //const AppWithNavigation = StackNavigator(NavConfig);
 //
 	//Deneme: { screen: DenemeScreen}
+  const TabScreens = TabNavigator({
+    Home: { screen: HomeScreen },
+    LadderBoard: { screen: LadderBoardScreen },
+    Drawer: { screen: DrawerScreen },
+    Profile: { screen: ProfileScreen },
 
+  }, {
+      initialRouteName: 'Home',
+      tabBarPosition: 'bottom',
+      swipeEnabled: false,
+      navigationOptions: ({ navigation }) => ({
+      tabBarIcon: ({ focused, tintColor }) => {
+        const { routeName } = navigation.state;
+        let iconName;
+        if (routeName === 'Home') {
+          iconName = "home";
+          iconType = "simple-line-icon";
+          iconSize = 24;
+        }else if (routeName === 'LadderBoard') {
+          iconName = "trophy";
+          iconType = "evilicon";
+          iconSize = 36;
+        }else if (routeName === 'Drawer') {
+          iconName = "chart";
+          iconType = "simple-line-icon";
+          iconSize = 24;
+        }else if (routeName === 'Profile') {
+          iconName = "user";
+          iconType = "simple-line-icon";
+          iconSize = 24;
+        }
+
+        return <Icon
+          name={iconName}
+          type={iconType}
+          color={tintColor}
+          size={iconSize}
+          containerStyle={{flex:1}}
+        />;
+      },
+      tabBarOnPress :()=>{
+        const { routeName } = navigation.state;
+        if(routeName === 'Drawer'){
+          navigation.navigate('Drawer');
+          if (typeof navigation.state.params.cancelState!=="undefined"){
+               navigation.state.params.cancelState();
+               console.log("cancelstated called from app");
+          }
+          else{
+          //your stuff
+          }
+        }else if(routeName === 'Home'){
+          navigation.navigate('Home');
+        }else if(routeName === 'LadderBoard'){
+          navigation.navigate('LadderBoard');
+        }else if(routeName === 'Profile'){
+          navigation.navigate('Profile');
+        }
+
+           }
+    }),
+    tabBarOptions: {
+      showIcon: true,
+      activeTintColor: '#545454',
+      inactiveTintColor: 'gray',
+      showLabel: false,
+      style: {
+        backgroundColor: "#EDE9F0",
+        height: 43
+      },
+      indicatorStyle: {
+          backgroundColor: '#cac7cc',
+          height: 43
+      },
+    },
+    });
 const StackScreens = StackNavigator({
   Activation: { screen: ActivationScreen,
     navigationOptions: ({navigation}) => ({
         drawerLockMode: 'locked-closed'
       }) },
-  Home: { screen: HomeScreen,
+  Home: { screen: TabScreens,
     navigationOptions: ({navigation}) => ({
         drawerLockMode: 'locked-closed'
       }) },
@@ -38,9 +115,10 @@ const StackScreens = StackNavigator({
         drawerLockMode: 'locked-closed'
       })},
   LoginFirebase: { screen: LoginFirebaseScreen,
-    navigationOptions: ({navigation}) => ({
-        drawerLockMode: 'locked-closed'
-      })},
+    // navigationOptions: ({navigation}) => ({
+    //     drawerLockMode: 'locked-closed'
+    //   })
+  },
 
 }, {
     initialRouteName: 'LoginFirebase',
@@ -48,22 +126,11 @@ const StackScreens = StackNavigator({
     initialRouteParams: { status: ' ' }
   });
 
-  const StackScreense = StackNavigator({
-    Activation: { screen: ActivationScreen },
-    Home: { screen: HomeScreen},
-    SignUp: { screen: SignUpScreen},
-    LoginFirebase: { screen: LoginFirebaseScreen},
-
-  }, {
-      initialRouteName: 'LoginFirebase',
-      navigationOptions:{ header: null},
-      initialRouteParams: { status: ' ' }
-    });
 
 
 
 const DrawerRoutes ={
-  Register: { screen: StackScreens }
+  Register: { screen: StackScreens },
 }
 const AppNavigator = DrawerNavigator(
     DrawerRoutes,

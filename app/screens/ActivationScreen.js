@@ -86,7 +86,7 @@ export default class ActivationScreen extends Component<Props> {
   renderHeader = () => {
     var content;
     if(this.state.isVisible){
-      content = <View style={{flex: 3}}><Text>{this.state.activationMsg}  {this.state.activationKey}</Text></View>
+      content = <View style={{flex: 3}}><Text style={{alignSelf: 'center', fontSize: 14, fontColor: this.state.fontColor}}>{this.state.activationMsg}  {this.state.activationKey}</Text></View>
     }else{
       content = <View style={{flex: 1}}></View>
     }
@@ -108,7 +108,11 @@ export default class ActivationScreen extends Component<Props> {
       this.state.realm.delete(user);
     })
     this.props.navigation.goBack();
+    this.props.screenProps.emit('deleteAccount', this.props.navigation.state.params.email);
 
+  }
+  newCodePressed = () => {
+    this.props.screenProps.emit('requestNewActivationKey', this.props.navigation.state.params.email)
   }
   renderChangeButtons = () => {
     var content;
@@ -122,7 +126,7 @@ export default class ActivationScreen extends Component<Props> {
             fontSize={15}
             color= {this.state.fontColor}
             buttonStyle={{borderRadius:12, backgroundColor:'rgba(255, 255, 255, 0)'}}
-            containerViewStyle={{backgroundColor:'rgba(255, 255, 255, 0)', borderRadius:18, borderWidth: 2, marginRight:20, marginLeft:20, borderColor:this.state.fontColor}}
+            containerViewStyle={styles.buttonSmall}
           />
         </View>
         <View style={{flex:1}}>
@@ -133,7 +137,7 @@ export default class ActivationScreen extends Component<Props> {
             fontSize={15}
             color= {this.state.fontColor}
             buttonStyle={{borderRadius:12, backgroundColor:'rgba(255, 255, 255, 0)'}}
-            containerViewStyle={{backgroundColor:'rgba(255, 255, 255, 0)', borderRadius:18, borderWidth: 2, marginRight:20, marginLeft:20, borderColor:this.state.fontColor}}
+            containerViewStyle={styles.buttonSmall}
           />
         </View>
       </View>
@@ -178,7 +182,7 @@ export default class ActivationScreen extends Component<Props> {
             fontSize={15}
             color= {this.state.fontColor}
             buttonStyle={{borderRadius:12, backgroundColor:'rgba(255, 255, 255, 0)'}}
-            containerViewStyle={{backgroundColor:'rgba(255, 255, 255, 0)', borderRadius:18, borderWidth: 2, marginRight:20, marginLeft:20, marginTop: 50, borderColor:this.state.fontColor}}
+            containerViewStyle={styles.buttonContainer}
           />
         {this.renderFooter()}
 
@@ -238,8 +242,16 @@ const styles = StyleSheet.create({
     flex: 4,
     marginRight: 20,
     marginLeft: 20,
-    backgroundColor:'rgba(255, 255, 255, 0)',
+    backgroundColor:'#E8ECF8',
     borderRadius:18,
-    borderWidth: 1,
+    elevation:10
+  },
+  buttonContainer: {
+    backgroundColor:'#EEE9EF',
+    borderRadius:18,
+    marginRight:20,
+    marginLeft:20,
+    marginTop:50,
+    elevation:10
   }
 });

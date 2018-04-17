@@ -23,6 +23,9 @@ export default class AnimatedBar extends Component {
       }),
     ]).start();
   }
+  startAnimation = () => {
+
+  }
   render() {
     const barStyles = {
       backgroundColor: this.props.color,

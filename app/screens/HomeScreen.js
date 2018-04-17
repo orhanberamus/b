@@ -9,12 +9,11 @@ import QuestionScreen from '../screens/QuestionScreen';
 import PopupDialog, { SlideAnimation } from 'react-native-popup-dialog';
 import { Icon, Button } from 'react-native-elements'
 
-import AnimatedBar from '../components/AnimatedBar';
+
 const slideAnimation = new SlideAnimation({
 	slideFrom: 'bottom',
 });
 const window = Dimensions.get('window');
-const DELAY = 1000;
 export default class HomeScreen extends Component<Props> {
   constructor(props){
     super(props);
@@ -30,39 +29,23 @@ export default class HomeScreen extends Component<Props> {
       getQuestion: true
 
     }
-    this.props.screenProps.on('answerStatisticsMsg', this.answerStatisticsMsgHandler);
     this.props.screenProps.on('requestQuestionMsg', this.requestQuestionMsgHandler);
 
   }
   componentDidMount(){
-    console.log(this.props);
+    //console.log(this.props);
+    setTimeout(
+       () => {
+         var data1 = {
+           socketID: this.props.screenProps.id,
+           email: this.props.navigation.state.params.email
+         }
+         this.props.screenProps.emit("setOnlineUser", data1);
+       },500
+     );
+
   }
-  answerStatisticsMsgHandler = (data) => {
-    console.log("answerstatistics geldi");
-    const data1 = [];
-    let item;
-    item = {
-      width: data.true.percent * window.width / 100,
-      text: 'Doğru',
-      percent: data.true.percent,
-      color: 'green',
-      k: 1
-    }
-    data1.push(item);
-    item = {
-      width: data.false.percent * window.width / 100,
-      text: 'Yanlış',
-      percent: data.false.percent,
-      color: 'red',
-      k: 2
-    }
-    data1.push(item);
-    this.setState({
-      data: data1,
-      answerMessage: data.message
-    });
-    this.closeQuestion();
-  }
+
   showQuestion = () => {
     if(!this.state.timeout){
       this.state.popupQuestion.show();
@@ -93,33 +76,7 @@ export default class HomeScreen extends Component<Props> {
     //this.props.socket.emit("getAnswerStatistics", 2);
     //this.props.socket.emit("updateUserAnswer", data)
   }
-  renderStatistics = () => {
-    var content;
-    if(this.state.timeOut){
-      content =
-      <PopupDialog
-          ref={((popupDialog)=>this.popupStatistics = popupDialog)}
-          ref={d => !this.state.popupStatistics && this.setState({ popupStatistics: d })}
-          dialogAnimation={slideAnimation}
-          height={0.5}
-          dismissOnTouchOutside={true}
-          dismissOnHardwareBackPress={true}
-        >
-        <ScrollView>
-          <View style={{ flex: 1, backgroundColor: '#F5FCFF', justifyContent: 'center'}}>
-          <Text style={{fontSize: 24, alignSelf: 'center', fontWeight: 'bold'}}>{this.state.answerMessage}</Text>
-          <Text style={{fontSize: 20}}>Diğer kullanıcıların cevapları</Text>
-            <View>
-              {this.state.data.map((index) => <AnimatedBar value={index.width} socket={this.props.screenProps} email="orhanfidan@hotmail.com" text={index.text} percent={index.percent} color={index.color} delay={DELAY * index} key={index.k} />)}
-            </View>
-          </View>
-          </ScrollView>
-        </PopupDialog>
-    } else{
-      content = null;
-    }
-    return content;
-  }
+
   render() {
     return (
       <ImageBackground
@@ -134,7 +91,7 @@ export default class HomeScreen extends Component<Props> {
           position:'absolute'
         }}
       >
-        <View style={{flex: 2, backgroundColor:'#EEE', justifyContent: 'center', flexDirection: 'row'}}>
+        <View style={{flex: 1.5, backgroundColor:'#EEE', justifyContent: 'center', flexDirection: 'row'}}>
         <Image
           source={require('../imgs/chanel1.gif')}
           resizeMode="stretch"
@@ -171,6 +128,7 @@ export default class HomeScreen extends Component<Props> {
             height={1}
       			dismissOnTouchOutside={false}
       			dismissOnHardwareBackPress={false}
+            containerStyle={{backgroundColor:'white'}}
       		>
               <QuestionScreen ref={((popupDialog)=>this.ss = popupDialog)}
                 ref={d => !this.state.ss && this.setState({ ss: d })}
@@ -184,13 +142,12 @@ export default class HomeScreen extends Component<Props> {
       				backgroundColor='#54545499'
       				onPress={() => this.requestQuestion()}
       				fontSize={18}
-      				color="#e7e7d6"
-      				buttonStyle={{borderRadius:12,}}
-      				containerViewStyle={{backgroundColor:'#e7e7d6', borderRadius:12, marginRight:20, marginLeft:20}}
+      				color="#545454"
+      				buttonStyle={{borderRadius:12, backgroundColor:'rgba(255, 255, 255, 0)'}}
+      				containerViewStyle={styles.buttonContainer}
       			/>
           </View>
 
-        {this.renderStatistics()}
       </ImageBackground>
     );
   }
@@ -201,7 +158,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5FCFF',
     width:  Dimensions.get('window').width
-  },button: {
+  },
+  button: {
     flex: 2,
     justifyContent: 'center',
 		marginBottom: 100,
@@ -209,4 +167,11 @@ const styles = StyleSheet.create({
 		paddingLeft: 20,
 		paddingRight:20,
 	},
+  buttonContainer: {
+    backgroundColor:'#EDE9F0',
+    borderRadius:18,
+    marginRight:20,
+    marginLeft:20,
+    elevation:10
+  }
 });

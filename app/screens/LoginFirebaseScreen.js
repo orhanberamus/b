@@ -4,9 +4,11 @@ import {
   StyleSheet,
   Text,
   View,
-  Image, ActivityIndicator, TextInput, ImageBackground, TouchableOpacity, StatusBar, Keyboard, ScrollView
+  Image, ActivityIndicator, TextInput, ImageBackground, TouchableOpacity, StatusBar, Keyboard, ScrollView, Dimensions
 } from 'react-native';
 import { Icon, Button  } from 'react-native-elements';
+import AnimatedBar from '../components/AnimatedBar';
+import AnimatedCircle from '../components/AnimatedCircle';
 import {CheckBox} from 'native-base';
 const FBSDK = require('react-native-fbsdk');
 import Realm from 'realm';
@@ -23,6 +25,8 @@ var config = {
     storageBucket: "fcmdeneme-db320.appspot.com",
     messagingSenderId: "829281769500"
  };
+ const DELAY = 1000;
+ const window = Dimensions.get('window');
 export const firebaseRef = firebase.initializeApp(config);
 const {
   LoginButton,
@@ -54,7 +58,25 @@ export default class LoginFirebaseScreen extends Component{
       checked: false,
       rememberMe: false,
       loginMessage: "",
-      buttonCooldown: false
+      buttonCooldown: false,
+      data1: [
+        {
+          width: 50 * window.width / 100,
+          text: 'Doğru',
+          percent: 50,
+          color: '#3b8a25',
+          k: 1,
+          r:"D"
+        },
+        {
+          width: 50 * window.width / 100,
+          text: 'Yanlış',
+          percent: 50,
+          color: '#e81300',
+          k: 2,
+          r: "Y"
+        }
+      ]
     }
       this.itemsRef = this.getRef().child('users');
 
@@ -66,14 +88,15 @@ export default class LoginFirebaseScreen extends Component{
    //this.getItems(this.itemsRef);
    console.log(this.props.screenProps);
    this.props.screenProps.on('loginResponse', this.loginResponseHandler);
-   this.props.screenProps.on('addNewUserResponse', this.addNewUserResponseHandler);
+   this.props.screenProps.on('addFacebookUserResponse', this.addFacebookUserResponseHandler);
+
   }
   componentWillMount(){
     this.keyboardWillShowSub = Keyboard.addListener('keyboardDidShow', this.keyboardWillShow);
     this.keyboardWillHideSub = Keyboard.addListener('keyboardDidHide', this.keyboardWillHide);
 
     this.props.screenProps.removeListener('loginResponse', this.loginResponseHandler);
-    this.props.screenProps.removeListener('addNewUserResponse', this.addNewUserResponseHandler);
+    this.props.screenProps.removeListener('addFacebookUserResponse', this.addFacebookUserResponseHandler);
 
     Realm.open({
       schema: [{name: 'user3', properties: {email: 'string', password: 'string', state: 'string', rememberMe: 'bool', get: 'int'}}]
@@ -127,21 +150,62 @@ export default class LoginFirebaseScreen extends Component{
     })
   }
   loginResponseHandler = (data) => {
+    if(this.state.rememberMe){
+      let update = this.state.realm.objects('user3');
+      if(update.length > 0){
+        this.state.realm.write(() => {
+          update[0].rememberMe = this.state.rememberMe;
+          update[0].email = data.email;
+          update[0].password = this.state.password;
+          update[0].state = 'activated';
+        })
+      }else if(update.length  === 0){
+        this.state.realm.write(() => {
+          this.state.realm.create('user3', { email: data.email, password: this.state.password.toString(), state: 'activated', rememberMe: this.state.rememberMe, get: 1 });
+        });
+      }
+    }
     this.setState({
       loginMessage: data.message
     })
     if(data.status){
+
       this.props.navigation.navigate('Home', {email: data.email});
     }
   }
-  addNewUserResponseHandler = (data) => {
-    if(data.status && !data.member){
-      this.state.realm.write(() => {
-        this.state.realm.create('user3', { email: data.email, password: data.password.toString(), state: 'activated', rememberMe: true, get: 1 });
-      });
+  addFacebookUserResponseHandler = (data) => {
+    if(data.status && !data.member){//ilk girişi ondan realme de kaydet
+      let update = this.state.realm.objects('user3');
+      if(update.length > 0){
+        this.state.realm.write(() => {
+          update[0].rememberMe = true;
+          update[0].email = data.email;
+          update[0].password = data.password.toString();
+          update[0].state = 'activated';
+        })
+      }else if(update.length  === 0){
+        this.state.realm.write(() => {
+          this.state.realm.create('user3', { email: data.email, password: data.password.toString(), state: 'activated', rememberMe: true, get: 1 });
+        });
+      }
+
       this.props.navigation.navigate('Home', { email: data.email, password: data.password });
-    }else if(data.status && data.member){
+
+    }else if(data.status && data.member){//direk home a yolla
       this.props.navigation.navigate('Home', { email: data.email, password: data.password });
+      let update = this.state.realm.objects('user3');
+      if(update.length > 0){
+        this.state.realm.write(() => {
+          update[0].rememberMe = true;
+          update[0].email = data.email;
+          update[0].password = data.password.toString();
+          update[0].state = 'activated';
+        })
+      }else if(update.length  === 0){
+        this.state.realm.write(() => {
+          this.state.realm.create('user3', { email: data.email, password: data.password.toString(), state: 'activated', rememberMe: true, get: 1 });
+        });
+      }
     }
 
   }
@@ -173,7 +237,7 @@ export default class LoginFirebaseScreen extends Component{
         activated: 1,
         from: "F"
       }
-      this.props.screenProps.emit("addNewUser", data)
+      this.props.screenProps.emit("addFacebookUser", data)
 
     }
   }
@@ -215,16 +279,8 @@ export default class LoginFirebaseScreen extends Component{
 
   }
   rememberMeHandler = (status) => {
-    let update = this.state.realm.objects('user3');
+
     this.setState({rememberMe: !status})
-    if(update.length > 0){
-      console.log("state " + !status);
-      this.state.realm.write(() => {
-        console.log("first " + status);
-        console.log(!status);
-        update[0].rememberMe = !status;
-      })
-    }
 
   }
   _fbAuth = () => {
@@ -290,7 +346,7 @@ export default class LoginFirebaseScreen extends Component{
     if(this.state.isVisible){
       content =
       <View style={{flex: 2}}>
-        <View style={{flex:1, zIndex: 5}}>
+        <View style={{flex:1, zIndex: 5, paddingBottom:30}}>
           <Button
             raised
             title="Facebook'la bağlan"
@@ -299,18 +355,19 @@ export default class LoginFirebaseScreen extends Component{
             fontSize={14}
             buttonStyle={{padding:5}}
             buttonStyle={{borderRadius:18,}}
-            containerViewStyle={{backgroundColor:'#e7e7d6', borderRadius:18, marginRight:20, marginLeft:20}}
+            containerViewStyle={styles.buttonContainer}
           />
           <Button
             raised
-            title="delete"
+            title="sil"
             backgroundColor='#4080FF'
             onPress={this.deleteAll}
             fontSize={14}
             buttonStyle={{padding:5}}
             buttonStyle={{borderRadius:18,}}
-            containerViewStyle={{backgroundColor:'#e7e7d6', borderRadius:18, marginRight:20, marginLeft:20}}
+            containerViewStyle={styles.buttonContainer}
           />
+
           </View>
           <View style={{flex: 1, flexDirection: 'row', alignItems:'center',  marginRight:40, }}>
             <TouchableOpacity onPress={this.signUp} style={{flex: 7, marginRight: 50}}>
@@ -337,8 +394,120 @@ export default class LoginFirebaseScreen extends Component{
     }
     return content;
   }
+  renderEnvelope = () => {
+    var content;
+    if(this.state.rememberMe){
+      content =
+
+    <View style={{flex: 1, flexDirection: 'row', paddingRight: 40, paddingLeft: 40,}}>
+      <Icon
+        name='email'
+        iconType='font-awesome'
+        color={this.state.fontColor}
+        size={20}
+        iconStyle={{paddingRight:10}}
+        containerStyle={{borderColor: this.state.fontColor, borderBottomWidth: 1, }}
+      />
+      <TextInput style={{flex:7, fontSize:14, borderColor: this.state.fontColor, borderBottomWidth: 1,}}
+        placeholder="E-posta"
+        placeholderTextColor={this.state.fontColor}
+        underlineColorAndroid="transparent"
+        maxLength={40}
+        value={this.state.email}
+        onChangeText = {(email) => this.setState({email : email})}
+        ref={component => this.emailInput = component}
+      />
+    </View>
+
+    }else{
+      content =
+      <View style={{flex: 1, flexDirection: 'row', paddingRight: 40, paddingLeft: 40,}}>
+        <Icon
+          name='envelope'
+          type='simple-line-icon'
+          color={this.state.fontColor}
+          size={18}
+          iconStyle={{paddingRight:10}}
+          containerStyle={{borderColor: this.state.fontColor, borderBottomWidth: 1, }}
+        />
+        <TextInput style={{flex:7, fontSize:14, borderColor: this.state.fontColor, borderBottomWidth: 1, paddingLeft: 6}}
+          placeholder="E-posta"
+          placeholderTextColor={this.state.fontColor}
+          underlineColorAndroid="transparent"
+          maxLength={40}
+          value={this.state.email}
+          onChangeText = {(email) => this.setState({email : email})}
+          ref={component => this.emailInput = component}
+        />
+      </View>
+
+    }
+    return content;
+  }
+  renderLock = () => {
+    var content;
+    if(this.state.rememberMe){
+      content =
+      <View style={{flex: 1, flexDirection: 'row', paddingRight: 40, paddingLeft: 40,}}>
+        <Icon
+          name='lock'
+          iconType='font-awesome'
+          color={this.state.fontColor}
+          size={22}
+          iconStyle={{paddingRight:10}}
+          containerStyle={{borderColor: this.state.fontColor, borderBottomWidth: 1}}
+        />
+        <TextInput style={{flex: 7, fontSize:14, borderColor: this.state.fontColor, borderBottomWidth: 1,}}
+          placeholder="Şifre"
+          placeholderTextColor={this.state.fontColor}
+          underlineColorAndroid="transparent"
+          secureTextEntry={true}
+          maxLength={20}
+          value={this.state.password}
+          onChangeText = {(password) => this.setState({password : password})}
+          ref={component => this.passwordInput = component}
+        />
+      </View>
+
+    }else{
+      content =
+      <View style={{flex: 1, flexDirection: 'row', paddingRight: 40, paddingLeft: 40,}}>
+        <Icon
+          name='lock'
+          type='simple-line-icon'
+          color={this.state.fontColor}
+          size={18}
+          containerStyle={{borderColor: this.state.fontColor, borderBottomWidth: 1}}
+        />
+        <TextInput style={{flex: 7, fontSize:14, borderColor: this.state.fontColor, borderBottomWidth: 1, paddingLeft:18}}
+          placeholder="Şifre"
+          placeholderTextColor={this.state.fontColor}
+          underlineColorAndroid="transparent"
+          secureTextEntry={true}
+          maxLength={20}
+          value={this.state.password}
+          onChangeText = {(password) => this.setState({password : password})}
+          ref={component => this.passwordInput = component}
+        />
+      </View>
+
+    }
+    return content;
+
+  }
   renderContent = () => {
     var content ;
+    const shadowOpt = {
+			width:160,
+			height:170,
+			color:"#000",
+			border:2,
+			radius:3,
+			opacity:0.2,
+			x:0,
+			y:3,
+			style:{marginVertical:5}
+		}
     if(this.state.loading){
       content = <View style={{flex: 1, padding: 20, alignItems:'center', justifyContent:'center', backgroundColor:'#F5FCFF'}}>
             <ActivityIndicator size="large" color="#4080FF"/>
@@ -346,45 +515,12 @@ export default class LoginFirebaseScreen extends Component{
     }else{
       content =   <View style={{flex:1,}}>
           <View style={{flex:1, justifyContent: 'center'}}>
-            <Text style={{alignSelf:'center', fontSize:20, color:'red'}}>{this.state.loginMessage}</Text>
+            <Text style={{alignSelf:'center', fontSize:20, color:'red'}}>{this.state.loginMessage}{this.state.email}</Text>
           </View>
-          <View style={{flex: 1, flexDirection: 'row', paddingRight: 40, paddingLeft: 40,}}>
-            <Icon
-              name='envelope'
-              type='simple-line-icon'
-              color={this.state.fontColor}
-              size={18}
-              containerStyle={{borderColor: this.state.fontColor, borderBottomWidth: 1}}
-            />
-            <TextInput style={{flex:7, fontSize:14, borderColor: this.state.fontColor, borderBottomWidth: 1, paddingLeft:10 }}
-  						placeholder="E-posta"
-  						placeholderTextColor={this.state.fontColor}
-              underlineColorAndroid="transparent"
-  						maxLength={40}
-              value={this.state.email}
-  						onChangeText = {(email) => this.setState({email : email})}
-  						ref={component => this.emailInput = component}
-  					/>
-          </View>
-          <View style={{flex: 1, flexDirection: 'row', paddingRight: 40, paddingLeft: 40,}}>
-            <Icon
-              name='lock'
-              type='simple-line-icon'
-              color={this.state.fontColor}
-              size={18}
-              containerStyle={{borderColor: this.state.fontColor, borderBottomWidth: 1}}
-            />
-            <TextInput style={{flex: 7, fontSize:14, borderColor: this.state.fontColor, borderBottomWidth: 1, paddingLeft:10}}
-  						placeholder="Şifre"
-  						placeholderTextColor={this.state.fontColor}
-              underlineColorAndroid="transparent"
-              secureTextEntry={true}
-  						maxLength={20}
-              value={this.state.password}
-  						onChangeText = {(password) => this.setState({password : password})}
-  						ref={component => this.passwordInput = component}
-  					/>
-          </View>
+            {this.renderEnvelope()}
+
+            {this.renderLock()}
+
           <View style={{flex: 1, flexDirection: 'row', paddingRight: 40, paddingLeft: 32,}}>
             <TouchableOpacity style={{flex: 3, flexDirection: 'row', alignItems: 'center', justifyContent:'flex-start' }} onPress={() => this.rememberMeHandler(this.state.rememberMe)}>
               <CheckBox
@@ -396,16 +532,15 @@ export default class LoginFirebaseScreen extends Component{
             </TouchableOpacity>
             <View style={{flex:4, justifyContent: 'center', alignItems:'flex-end', }}><Text style={{ color: this.state.fontColor}}>Şifremi unuttum</Text></View>
           </View>
-          <View style={{flex:1, zIndex: 5}}>
+          <View style={{flex:1, zIndex: 5, paddingTop:30}}>
             <Button
               raised
               title="Giriş yap"
-              backgroundColor='#4080FF'
               fontSize={14}
               color= {this.state.fontColor}
               onPress={this.login}
               buttonStyle={{borderRadius:12, backgroundColor:'rgba(255, 255, 255, 0)'}}
-              containerViewStyle={{backgroundColor:'rgba(255, 255, 255, 0)', borderRadius:18, borderWidth: 1, marginRight:20, marginLeft:20, borderColor:this.state.fontColor}}
+              containerViewStyle={styles.buttonContainer}
             />
 
           </View>
@@ -476,7 +611,6 @@ export default class LoginFirebaseScreen extends Component{
           position:'absolute'
         }}
         >
-
           <StatusBar backgroundColor="#545454"/>
 
      			 {this.renderContent()}
@@ -490,4 +624,11 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     alignSelf:'center'
   },
+  buttonContainer: {
+    backgroundColor:'#ECEAF3',
+    borderRadius:18,
+    marginRight:20,
+    marginLeft:20,
+    elevation:10
+  }
 });
